@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Face Emotion Recognition</title>
+</head>
+<body>
+    <h1>Webcam Face Emotion Recognition</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="capture">Capture Emotion</button>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+    <p id="result"></p>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const resultText = document.getElementById('result');
+
+        // Access the webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            });
+
+        captureButton.addEventListener('click', () => {
+            // Capture a frame from the video
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                // Send the captured frame to the server
+                const formData = new FormData();
+                formData.append('file', blob, 'capture.jpg');
+
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    resultText.textContent = `Detected Emotion: ${data.emotion}`;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }, 'image/jpeg');
+        });
+    </script>
+</body>
+</html>
